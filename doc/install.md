@@ -1,6 +1,6 @@
 ## Environment Setup
 step 1. Install environment for pytorch training
-```
+```shell
 conda create --name FlashOcc python=3.8.5
 conda activate FlashOcc
 pip install torch==1.10.0+cu111 torchvision==0.11.0+cu111 torchaudio==0.10.0 -f https://download.pytorch.org/whl/torch_stable.html
@@ -27,6 +27,7 @@ pip install tensorboard
 pip install trimesh==2.35.39
 pip install setuptools==59.5.0
 pip install yapf==0.40.1
+pip install open3d==0.15.2  # 从 issue 中找到的作者版本
 
 cd Path_to_FlashOcc
 git clone git@github.com:Yzichen/FlashOCC.git

@@ -178,7 +178,7 @@ class LSSViewTransformer(BaseModule):
         # (D, fH, fW, 3) - (B, N, 1, 1, 1, 3) --> (B, N, D, fH, fW, 3)
         points = self.frustum.to(sensor2ego) - post_trans.view(B, N, 1, 1, 1, 3)
         # (B, N, 1, 1, 1, 3, 3) @ (B, N, D, fH, fW, 3, 1)  --> (B, N, D, fH, fW, 3, 1)
-        points = torch.inverse(post_rots).view(B, N, 1, 1, 1, 3, 3)\
+        points = torch.inverse(post_rots.cpu()).cuda().view(B, N, 1, 1, 1, 3, 3)\
             .matmul(points.unsqueeze(-1))
 
         # cam_to_ego
@@ -186,7 +186,7 @@ class LSSViewTransformer(BaseModule):
         points = torch.cat(
             (points[..., :2, :] * points[..., 2:3, :], points[..., 2:3, :]), 5)
         # R_{c->e} @ K^-1
-        combine = sensor2ego[:, :, :3, :3].matmul(torch.inverse(cam2imgs))
+        combine = sensor2ego[:, :, :3, :3].matmul(torch.inverse(cam2imgs.cpu()).cuda())
         # (B, N, 1, 1, 1, 3, 3) @ (B, N, D, fH, fW, 3, 1)  --> (B, N, D, fH, fW, 3, 1)
         # --> (B, N, D, fH, fW, 3)
         points = combine.view(B, N, 1, 1, 1, 3, 3).matmul(points).squeeze(-1)

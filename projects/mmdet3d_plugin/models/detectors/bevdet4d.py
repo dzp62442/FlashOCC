@@ -86,7 +86,7 @@ class BEVDet4D(BEVDet):
 
         # transformation from current ego frame to adjacent ego frame
         # key_ego --> prev_cam_front --> prev_ego
-        keyego2adjego = curr_sensor2keyego.matmul(torch.inverse(prev_sensor2keyego))
+        keyego2adjego = curr_sensor2keyego.matmul(torch.inverse(prev_sensor2keyego.cpu()).cuda())
         keyego2adjego = keyego2adjego.unsqueeze(dim=1)      # (B, 1, 1, 4, 4)
 
         # (B, 1, 1, 3, 3)
@@ -106,7 +106,7 @@ class BEVDet4D(BEVDet):
         feat2bev = feat2bev.view(1, 3, 3)       # (1, 3, 3)
 
         # curr_feat_grid --> key ego --> prev_cam --> prev_ego --> prev_feat_grid
-        tf = torch.inverse(feat2bev).matmul(keyego2adjego).matmul(feat2bev)    # (B, 1, 1, 3, 3)
+        tf = torch.inverse(feat2bev.cpu()).cuda().matmul(keyego2adjego).matmul(feat2bev)    # (B, 1, 1, 3, 3)
         grid = tf.matmul(grid)      # (B, Dy, Dx, 3, 1)    3: (grid_x, grid_y, 1)
         normalize_factor = torch.tensor([W - 1.0, H - 1.0],
                                         dtype=input.dtype,
@@ -242,7 +242,7 @@ class BEVDet4D(BEVDet):
         # key_ego --> global  (B, 1, 1, 4, 4)
         keyego2global = ego2globals[:, 0, 0, ...].unsqueeze(1).unsqueeze(1)
         # global --> key_ego  (B, 1, 1, 4, 4)
-        global2keyego = torch.inverse(keyego2global.double())
+        global2keyego = torch.inverse(keyego2global.double().cpu()).cuda()
         # sensor --> ego --> global --> key_ego
         sensor2keyegos = \
             global2keyego @ ego2globals.double() @ sensor2egos.double()     # (B, N_frames, N_views, 4, 4)
@@ -264,7 +264,7 @@ class BEVDet4D(BEVDet):
 
             # curr_sensor --> curr_ego --> global --> prev_ego --> prev_sensor
             curr2adjsensor = \
-                torch.inverse(ego2globals_adj @ sensor2egos_adj) \
+                torch.inverse((ego2globals_adj @ sensor2egos_adj).cpu()).cuda() \
                 @ ego2globals_curr @ sensor2egos_curr       # (B, N_temporal=2, N_views, 4, 4)
             curr2adjsensor = curr2adjsensor.float()         # (B, N_temporal=2, N_views, 4, 4)
             curr2adjsensor = torch.split(curr2adjsensor, 1, 1)

@@ -273,7 +273,7 @@ class DepthNet(nn.Module):
         frustum = metas['frustum']      # (D, fH_stereo, fW_stereo, 3)  3:(u, v, d)
         # 逆图像增广:
         points = frustum - metas['post_trans'].view(B, N, 1, 1, 1, 3)
-        points = torch.inverse(metas['post_rots']).view(B, N, 1, 1, 1, 3, 3) \
+        points = torch.inverse(metas['post_rots'].cpu()).cuda().view(B, N, 1, 1, 1, 3, 3) \
             .matmul(points.unsqueeze(-1))   # (B, N_views, D, fH_stereo, fW_stereo, 3, 1)
 
         # (u, v, d) --> (du, dv, d)
@@ -284,7 +284,7 @@ class DepthNet(nn.Module):
         # cur_pixel --> curr_camera --> prev_camera
         rots = metas['k2s_sensor'][:, :, :3, :3].contiguous()
         trans = metas['k2s_sensor'][:, :, :3, 3].contiguous()
-        combine = rots.matmul(torch.inverse(metas['intrins']))
+        combine = rots.matmul(torch.inverse(metas['intrins'].cpu()).cuda())
         points = combine.view(B, N, 1, 1, 1, 3, 3).matmul(points)
         points += trans.view(B, N, 1, 1, 1, 3, 1)   # (B, N_views, D, fH_stereo, fW_stereo, 3, 1)
 
